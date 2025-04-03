@@ -22,11 +22,12 @@ Environment="AWS_SECRET_ACCESS_KEY={{ restic_aws_secret_access_key}}"
 ExecStartPre=/bin/sh -c '{{ restic_path }} snapshots || {{ restic_path }} init'
 
 {% if restic_check %}
+ExecStartPre={{ restic_path }} unlock
 ExecStartPre={{ restic_path }} check
 {% endif -%}
 
 {% for folder in restic_folders_combined %}
-ExecStart={{ restic_path }} backup --verbose {{ folder.path }} {{ folder.exclude if folder.exclude is defined else '' }}
+ExecStart={{ restic_path }} {{ restic_global_flags }} backup {{ restic_backup_flags }} {{ folder.flags | default('') }} {{ folder.path }}
 {% endfor -%}
 
 {% for database in restic_databases %}
