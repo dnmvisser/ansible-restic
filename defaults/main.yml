@@ -15,7 +15,7 @@ restic_databases: []
 restic_global_flags: ''
 restic_dump_compression_enabled: false
 restic_forget: true
-restic_forget_keep_within: 30d
+restic_forget_policy: --keep-within 30d
 restic_prune: true
 restic_check: true
 

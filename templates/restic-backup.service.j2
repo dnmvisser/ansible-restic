@@ -19,10 +19,14 @@ Environment="AWS_ACCESS_KEY_ID={{ restic_aws_access_key_id}}"
 Environment="AWS_SECRET_ACCESS_KEY={{ restic_aws_secret_access_key}}"
 {% endif %}
 
+{% for cmd in restic_pre_commands %}
+ExecStartPre={{ cmd }}
+{% endfor %}
+
 ExecStartPre=/bin/sh -c '{{ restic_path }} snapshots || {{ restic_path }} init'
 
 {% if restic_check %}
-ExecStartPre={{ restic_path }} unlock
+ExecStartPre={{ restic_path }} unlock --remove-all
 ExecStartPre={{ restic_path }} check
 {% endif -%}
 
@@ -35,7 +39,7 @@ ExecStart=/bin/sh -c "{{ database.dump_command }} {{ '| pigz |' if restic_dump_c
 {% endfor -%}
 
 {% if restic_forget %}
-ExecStartPost={{ restic_path }} forget --keep-within {{ restic_forget_keep_within }}
+ExecStartPost={{ restic_path }} forget {{ restic_forget_policy }}
 {% endif -%}
 
 {% if restic_prune %}
