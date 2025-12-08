@@ -5,7 +5,7 @@ Description=Restic backup
 Type=oneshot
 User={{ restic_user }}
 
-CPUQuota={{ 25 * ansible_processor_vcpus }}%
+CPUQuota={{ 25 * ansible_facts['processor_vcpus'] }}%
 
 {% if restic_ssh_enabled %}
 Environment="RESTIC_REPOSITORY=sftp:{{ restic_ssh_host }}:{{ restic_repository_name }}"
