@@ -5,7 +5,7 @@ Description=Restic backup
 Type=oneshot
 User={{ restic_user }}
 
-CPUQuota={{ 25 * ansible_processor_vcpus }}%
+CPUQuota={{ 25 * ansible_facts['processor_vcpus'] }}%
 
 {% if restic_ssh_enabled %}
 Environment="RESTIC_REPOSITORY=sftp:{{ restic_ssh_host }}:{{ restic_repository_name }}"
@@ -19,14 +19,19 @@ Environment="AWS_ACCESS_KEY_ID={{ restic_aws_access_key_id}}"
 Environment="AWS_SECRET_ACCESS_KEY={{ restic_aws_secret_access_key}}"
 {% endif %}
 
+{% for cmd in restic_pre_commands %}
+ExecStartPre={{ cmd }}
+{% endfor %}
+
 ExecStartPre=/bin/sh -c '{{ restic_path }} snapshots || {{ restic_path }} init'
 
 {% if restic_check %}
+ExecStartPre={{ restic_path }} unlock --remove-all
 ExecStartPre={{ restic_path }} check
 {% endif -%}
 
 {% for folder in restic_folders_combined %}
-ExecStart={{ restic_path }} backup --verbose {{ folder.path }} {{ folder.exclude if folder.exclude is defined else '' }}
+ExecStart={{ restic_path }} {{ restic_global_flags }} backup {{ restic_backup_flags }} {{ folder.flags | default('') }} {{ folder.path }}
 {% endfor -%}
 
 {% for database in restic_databases %}
@@ -34,7 +39,7 @@ ExecStart=/bin/sh -c "{{ database.dump_command }} {{ '| pigz |' if restic_dump_c
 {% endfor -%}
 
 {% if restic_forget %}
-ExecStartPost={{ restic_path }} forget --keep-within {{ restic_forget_keep_within }}
+ExecStartPost={{ restic_path }} forget {{ restic_forget_policy }}
 {% endif -%}
 
 {% if restic_prune %}
